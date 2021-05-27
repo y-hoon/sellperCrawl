@@ -1,6 +1,8 @@
 import json
 import scrapy
 
+from ..items import KeywordItem
+
 
 class sellperspider(scrapy.Spider):
     name = 'sellperspider'
@@ -17,11 +19,13 @@ class sellperspider(scrapy.Spider):
         for ct in category_one_json:
             # print(ct)
             cid = ct.get('cid')
+            category_first_name = ct.get('name')
             # print(cid)
 
+            # 키워드 조회
+            yield scrapy.Request('https://sellper.kr/stats/{}'.format(cid), self.parse_keyword, meta={'category_first_name': category_first_name})
 
-
-            yield scrapy.Request('https://sellper.kr/categories/{}'.format(cid), self.parse_second_category)
+            # yield scrapy.Request('https://sellper.kr/categories/{}'.format(cid), self.parse_second_category)
 
 
     def parse_second_category(self, response):
@@ -50,4 +54,38 @@ class sellperspider(scrapy.Spider):
             # print(cid)
 
 
+    # 키워드 처리
+    def parse_keyword(self, response):
+        # self.logger.info('sellper category keyword url ===> {}'.format(response.url))
+        # self.logger.info('sellper category keyword text ====> {}'.format(response.text))
 
+        keywords = json.loads(response.text).get("data")
+
+        for keyword in keywords:
+            # print(keyword)
+            # print()
+
+            item = KeywordItem()
+            item['category_first_name'] = response.meta['category_first_name']
+
+            try:
+                item['category_second_name'] = response.meta['category_second_name']
+            except KeyError:
+                item['category_second_name'] = ''
+
+            try:
+                item['category_third_name'] = response.meta['category_third_name']
+            except KeyError:
+                item['category_third_name'] = ''
+
+            item['order_num'] = keyword.get('rank')
+            item['keyword'] = keyword.get('keyword')
+            item['search_num_pc'] = keyword.get('mpcqry')
+            item['search_num_mobile'] = keyword.get('mmoqry')
+            item['search_num_total'] = int(keyword.get('mmoqry')) + int(keyword.get('mpcqry'))
+            item['product_num'] = keyword.get('item_num')
+            item['rate'] = round(int(keyword.get('item_num')) / int(item['search_num_total']), 4)
+
+            # print(dict(item))
+
+            yield item
