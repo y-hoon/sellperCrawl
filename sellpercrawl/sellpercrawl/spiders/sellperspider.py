@@ -4,7 +4,7 @@ import scrapy
 from ..items import KeywordItem
 
 
-class sellperspider(scrapy.Spider):
+class SellperSpider(scrapy.Spider):
     name = 'sellperspider'
     allowed_domains = ['sellper.kr']
     start_urls = ['https://sellper.kr/categories/0']
