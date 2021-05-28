@@ -23,27 +23,43 @@ class SellperSpider(scrapy.Spider):
             # print(cid)
 
             # 키워드 조회
-            yield scrapy.Request('https://sellper.kr/stats/{}'.format(cid), self.parse_keyword, meta={'category_first_name': category_first_name})
+            yield scrapy.Request('https://sellper.kr/stats/{}'.format(cid), self.parse_keyword,
+                                 meta={'category_first_name': category_first_name})
 
-            # yield scrapy.Request('https://sellper.kr/categories/{}'.format(cid), self.parse_second_category)
+            yield scrapy.Request('https://sellper.kr/categories/{}'.format(cid), self.parse_second_category,
+                                 meta={'category_first_name': category_first_name})
 
 
     def parse_second_category(self, response):
         # self.logger.info('sellper second category url ===> {}'.format(response.url))
         # self.logger.info('sellper second category text ====> {}'.format(response.text))
 
-        #두번쨰 카테고리 json 값 로딩
+        category_first_name = response.meta['category_first_name']
+
+        # 두번쨰 카테고리 json 값 로딩
         category_two_json = json.loads(response.text).get("childList")
 
         for ct_two in category_two_json:
             # print(ct_two)
             cid = ct_two.get('cid')
+            category_second_name = ct_two.get('name')
             # print(cid)
-            yield scrapy.Request('https://sellper.kr/categories/{}'.format(cid), self.parse_third_category)
+
+            #키워드 조회
+            yield scrapy.Request('https://sellper.kr/stats/{}'.format(cid), self.parse_keyword,
+                                 meta={'category_first_name': category_first_name,
+                                       'category_second_name': category_second_name})
+
+            yield scrapy.Request('https://sellper.kr/categories/{}'.format(cid), self.parse_third_category,
+                                 meta={'category_first_name': category_first_name,
+                                       'category_second_name': category_second_name})
 
     def parse_third_category(self, response):
         # self.logger.info('sellper third category url ===> {}'.format(response.url))
         # self.logger.info('sellper third category text ====> {}'.format(response.text))
+
+        category_first_name = response.meta['category_first_name']
+        category_second_name = response.meta['category_second_name']
 
         #세번째 카테고리 json 값 로딩
         category_third_json = json.loads(response.text).get("childList")
@@ -51,8 +67,14 @@ class SellperSpider(scrapy.Spider):
         for ct_third in category_third_json:
             # print(ct_two)
             cid = ct_third.get('cid')
+            category_third_name = ct_third.get('name')
             # print(cid)
 
+            # 키워드 조회
+            yield scrapy.Request('https://sellper.kr/stats/{}'.format(cid), self.parse_keyword,
+                                 meta={'category_first_name': category_first_name,
+                                       'category_second_name': category_second_name,
+                                       'category_third_name': category_third_name})
 
     # 키워드 처리
     def parse_keyword(self, response):
